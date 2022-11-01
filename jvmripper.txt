@@ -1,0 +1,9 @@
+Маркерный интерфейс Clonable имеет следующую нативную реализацию:
+
+    11 ---> hotspot ---> share ---> prims ---> jvm.cpp [строки кода 643-647]:
+
+        JVM_ENTRY(jobject, JVM_Clone(JNIEnv* env, jobject handle))
+            JVMWrapper("JVM_Clone");
+            Handle obj(THREAD, JNIHandles::resolve_non_null(handle));
+            Klass* klass = obj->klass();
+            JvmtiVMObjectAllocEventCollector oam;

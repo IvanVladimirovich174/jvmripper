@@ -2,15 +2,16 @@
     Нативная реализация метода .clone() представлена по следующему пути:
 
     11 ---> hotspot ---> share ---> prims ---> jvm.cpp [строки кода 643-647]
-
+    --------------------------------------------------------------------------
             JVM_ENTRY(jobject, JVM_Clone(JNIEnv* env, jobject handle))
                 JVMWrapper("JVM_Clone");
                 Handle obj(THREAD, JNIHandles::resolve_non_null(handle));
                 Klass* klass = obj->klass();
                 JvmtiVMObjectAllocEventCollector oam;
-
+    --------------------------------------------------------------------------
 
 2. Исключения.
+
     2.1.1. Если можно предусмотреть логику проверки наличия факта
     - обработки исключения;
     - передачи вызывающему методу исключения  - то такое исключение относится к группе проверяемых исключений.
@@ -21,7 +22,7 @@
     - передачи вызывающему методу исключения
     или,
     если обработка/передача вызывающему методу исключения в значительной степени увеличивает объем кода (например,проверять обработку/передачу вызывающему методу объекта ArithmeticException при
-    каждом написании операции деления) то такое исключение относится к группе непроверяемых исключений.
+    каждом написании операции деления) - то такое исключение относится к группе непроверяемых исключений.
 
     Причина невозможности проверки наличия факта обработки непроверяемого исключения или передачи непроверяемого исключения вызывающему методу следующая:
     - место возникновения исключетельной ситуации;
@@ -29,11 +30,126 @@
     является характеристикой стохастической в момент выполнения программы (неопределенной, случайной).
     К непроверяемым исключениям относятся исключения класса Error и RunTimeException и иные подклассы, унаследованные от данных суперклассов.
 
-    2.2. Полный перечень всех исключений, которые непосредственно (объект исключения создается в JVM на языке C++ и только потом преобразуются в объект исключения языка Java) может сгененрировать JVM представлен по следующему пути:
+    2.2. Полный перечень всех исключений, которые непосредственно (объект-исключение на языке C++ создается в JVM, далее преобразуется в объект-исключение на языка Java)
+    может сгененрировать JVM представлен по следующему пути:
 
     11 ---> hotspot ---> share ---> classfile ---> vmSymbols.hhp [строки кода 173-223]
+    ----------------------------------------------------------------------------------------------------------
+    /* exception klasses: at least all exceptions thrown by the VM have entries here */             \
+      template(java_lang_ArithmeticException,             "java/lang/ArithmeticException")            \
+      template(java_lang_ArrayIndexOutOfBoundsException,  "java/lang/ArrayIndexOutOfBoundsException") \
+      template(java_lang_ArrayStoreException,             "java/lang/ArrayStoreException")            \
+      template(java_lang_ClassCastException,              "java/lang/ClassCastException")             \
+      template(java_lang_ClassNotFoundException,          "java/lang/ClassNotFoundException")         \
+      template(java_lang_CloneNotSupportedException,      "java/lang/CloneNotSupportedException")     \
+      template(java_lang_IllegalAccessException,          "java/lang/IllegalAccessException")         \
+      template(java_lang_IllegalArgumentException,        "java/lang/IllegalArgumentException")       \
+      template(java_lang_IllegalStateException,           "java/lang/IllegalStateException")          \
+      template(java_lang_IllegalMonitorStateException,    "java/lang/IllegalMonitorStateException")   \
+      template(java_lang_IllegalThreadStateException,     "java/lang/IllegalThreadStateException")    \
+      template(java_lang_IndexOutOfBoundsException,       "java/lang/IndexOutOfBoundsException")      \
+      template(java_lang_InstantiationException,          "java/lang/InstantiationException")         \
+      template(java_lang_InstantiationError,              "java/lang/InstantiationError")             \
+      template(java_lang_InterruptedException,            "java/lang/InterruptedException")           \
+      template(java_lang_BootstrapMethodError,            "java/lang/BootstrapMethodError")           \
+      template(java_lang_LinkageError,                    "java/lang/LinkageError")                   \
+      template(java_lang_NegativeArraySizeException,      "java/lang/NegativeArraySizeException")     \
+      template(java_lang_NoSuchFieldException,            "java/lang/NoSuchFieldException")           \
+      template(java_lang_NoSuchMethodException,           "java/lang/NoSuchMethodException")          \
+      template(java_lang_NullPointerException,            "java/lang/NullPointerException")           \
+      template(java_lang_StringIndexOutOfBoundsException, "java/lang/StringIndexOutOfBoundsException")\
+      template(java_lang_UnsupportedOperationException,   "java/lang/UnsupportedOperationException")  \
+      template(java_lang_InvalidClassException,           "java/lang/InvalidClassException")          \
+      template(java_lang_reflect_InvocationTargetException, "java/lang/reflect/InvocationTargetException") \
+      template(java_lang_Exception,                       "java/lang/Exception")                      \
+      template(java_lang_RuntimeException,                "java/lang/RuntimeException")               \
+      template(java_io_IOException,                       "java/io/IOException")                      \
+      template(java_security_PrivilegedActionException,   "java/security/PrivilegedActionException")  \
+                                                                                                      \
+      /* error klasses: at least all errors thrown by the VM have entries here */                     \
+      template(java_lang_AbstractMethodError,             "java/lang/AbstractMethodError")            \
+      template(java_lang_ClassCircularityError,           "java/lang/ClassCircularityError")          \
+      template(java_lang_ClassFormatError,                "java/lang/ClassFormatError")               \
+      template(java_lang_UnsupportedClassVersionError,    "java/lang/UnsupportedClassVersionError")   \
+      template(java_lang_Error,                           "java/lang/Error")                          \
+      template(java_lang_ExceptionInInitializerError,     "java/lang/ExceptionInInitializerError")    \
+      template(java_lang_IllegalAccessError,              "java/lang/IllegalAccessError")             \
+      template(java_lang_IncompatibleClassChangeError,    "java/lang/IncompatibleClassChangeError")   \
+      template(java_lang_InternalError,                   "java/lang/InternalError")                  \
+      template(java_lang_NoClassDefFoundError,            "java/lang/NoClassDefFoundError")           \
+      template(java_lang_NoSuchFieldError,                "java/lang/NoSuchFieldError")               \
+      template(java_lang_NoSuchMethodError,               "java/lang/NoSuchMethodError")              \
+      template(java_lang_OutOfMemoryError,                "java/lang/OutOfMemoryError")               \
+      template(java_lang_UnsatisfiedLinkError,            "java/lang/UnsatisfiedLinkError")           \
+      template(java_lang_VerifyError,                     "java/lang/VerifyError")                    \
+      template(java_lang_SecurityException,               "java/lang/SecurityException")              \
+      template(java_lang_VirtualMachineError,             "java/lang/VirtualMachineError")            \
+      template(java_lang_StackOverflowError,              "java/lang/StackOverflowError")             \
+      template(java_lang_StackTraceElement,               "java/lang/StackTraceElement")              \
+    ----------------------------------------------------------------------------------------------------------
+
+    Вышеуказанные исключения непосредственно генерируются JVM.
+    Генерации исключения на уровне JVM зависит от места возникновения данного исключения.
+    Например, ArrayIndexOutOfBoundsException возникает при выполненни следующего участка кода.
+    Данный участок кода представлен по следующему пути:
+
+    11 ---> hotspot ---> share ---> interpreter ---> bytecodeInterpreter.cpp [строки кода 1640-1649]
+    ----------------------------------------------------------------------------------------------------------
+    #define ARRAY_INTRO(arrayOff)                                                  \
+          arrayOop arrObj = (arrayOop)STACK_OBJECT(arrayOff);                      \
+          jint     index  = STACK_INT(arrayOff + 1);                               \
+          char message[jintAsStringSize];                                          \
+          CHECK_NULL(arrObj);                                                      \
+          if ((uint32_t)index >= (uint32_t)arrObj->length()) {                     \
+              sprintf(message, "%d", index);                                       \
+              VM_JAVA_ERROR(vmSymbols::java_lang_ArrayIndexOutOfBoundsException(), \
+                            message, note_rangeCheck_trap);                        \
+          }
+    ----------------------------------------------------------------------------------------------------------
+
+    Возникает вопрос: каким образом класс-исключение языка C++, сгенерированный на уровне JVM преобразуется в класс-исключение языка Java?
+
+    Данный механизм обеспечивается классом SharedRuntime.
+    Полный код класса SharedRuntime представлен по следующим путям:
+    11 ---> hotspot ---> share ---> sharedRuntime.cpp
+    11 ---> hotspot ---> share ---> sharedRuntime.hpp
+    Краткое описание класса представлено ниже:
+    -----------------------------------------------------------------
+    / Runtime is the base class for various runtime interfaces
+    // (InterpreterRuntime, CompilerRuntime, etc.). It provides
+    // shared functionality such as exception forwarding (C++ to
+    // Java exceptions), locking/unlocking mechanisms, statistical
+    // information, etc.
+
+    class SharedRuntime: AllStatic {
+      friend class VMStructs;
+    -----------------------------------------------------------------
 
 
+    =======================================================================================================================================================
+    Примечание.
+    Не все исключения, описанные в Java API, являющиеся суперклассом RuntimeException или Error, или их подклассами, непосредственно генерируются JVM.
+    Например, AnnotationTypeMismatchException.
+    Данное исключение присутствует в Java API, но отстутсвует в хедерах vmSymbols.hhp
+    Дело в том, что данное исключение описано в Java API. И данное исключение является подклассом суперкласса RuntimeException.
+    RuntimeException в свою очередь является подклассом суперкласса Throwable.
+    Throwable имеет метод с нативной реализацией private native Throwable fillInStackTrace(int dummy).
+    При вызове данного метода StackTrace заполняется соответствующим выброшенным исключением.
+    Нативная реализация метода .fillInStackTrace(int dummy) представлена по следующему пути:
+
+    11 ---> hotspot ---> share ---> prims ---> jvm.cpp [строки кода 521-525]
+    ----------------------------------------------------------------------
+    JVM_ENTRY(void, JVM_FillInStackTrace(JNIEnv *env, jobject receiver))
+      JVMWrapper("JVM_FillInStackTrace");
+      Handle exception(thread, JNIHandles::resolve_non_null(receiver));
+      java_lang_Throwable::fill_in_stack_trace(exception);
+    JVM_END
+    ----------------------------------------------------------------------
+    =======================================================================================================================================================
+
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ----------------------------------------------------------------------------------------------------------------------------------------------
     Выражение, включающее в себя зарезервированное слово "throw" компилируется в байт-код инструкцию ATHROW.
     Реализация интерпритации байт-код инструкции ATHROW в JVM представлена по следующему пути:
